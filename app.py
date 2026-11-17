@@ -1,73 +1,116 @@
+
 import streamlit as st
 import tensorflow as tf
 import numpy as np
 from PIL import Image
 from pathlib import Path
 
-# Page configuration
-st.set_page_config(page_title="Potato CNN", page_icon="🥔", layout="wide")
+# Page Configuration
+st.set_page_config(
+    page_title="Potato Leaf Disease Detection",
+    page_icon="🥔",
+    layout="centered"
+)
 
 ROOT = Path(__file__).resolve().parent
 IMG_SIZE = (128, 128)
 
-# Load model and class names
+# Load Model
 @st.cache_resource
 def load_model():
-    return tf.keras.models.load_model(ROOT / "potato_cnn_model.keras")
+    return tf.keras.models.load_model(
+        ROOT / "potato_cnn_model.keras"
+    )
 
+# Load Classes
 @st.cache_data
 def load_classes():
     return (ROOT / "classification_report.txt").read_text().splitlines()
 
-# Sidebar
-st.sidebar.title("🥔 Potato AI")
-page = st.sidebar.radio("Navigation", ["Home", "About"])
 
-if page == "Home":
-    st.title("🥔 Potato Leaf Classification")
-    st.write("Upload an image to predict its class.")
-    st.divider()
+# Main UI
+st.title("🥔 Potato Leaf Disease Detection")
 
-    uploaded_file = st.file_uploader("Upload JPG Image", type=["jpg", "jpeg"])
+st.write(
+    "Upload a potato leaf image to identify whether "
+    "the leaf is healthy or affected by disease."
+)
 
-    if uploaded_file:
-        image = Image.open(uploaded_file).convert("RGB")
-        col1, col2 = st.columns(2)
+st.divider()
 
-        with col1:
-            st.subheader("Uploaded Image")
-            st.image(image, width="stretch")
+# Image Upload
+uploaded_file = st.file_uploader(
+    "Choose Potato Leaf Image",
+    type=["jpg", "jpeg", "png"]
+)
 
-        with col2:
-            st.subheader("Prediction")
+if uploaded_file is not None:
 
-            if st.button("Predict Image", type="primary"):
-                try:
-                    model = load_model()
-                    classes = load_classes()
+    image = Image.open(uploaded_file).convert("RGB")
 
-                    image = image.resize(IMG_SIZE)
-                    x = np.expand_dims(np.array(image, dtype=np.float32), axis=0)
+    st.image(
+        image,
+        caption="Uploaded Potato Leaf",
+        width=300
+    )
 
-                    scores = model.predict(x, verbose=0)[0]
-                    best = np.argmax(scores)
+    if st.button(
+        "🔍 Predict Disease",
+        type="primary",
+        use_container_width=True
+    ):
 
-                    st.success("Prediction Completed!")
-                    st.metric("Predicted Class", classes[best].replace("potato__", ""))
-                    st.metric("Confidence", f"{scores[best]*100:.2f}%")
+        try:
+            model = load_model()
+            classes = load_classes()
 
-                    st.subheader("Class Probabilities")
-                    for name, score in zip(classes, scores):
-                        st.write(f"{name}: {score*100:.2f}%")
-                        st.progress(float(score))
+            img = image.resize(IMG_SIZE)
 
-                except Exception as e:
-                    st.error(f"Prediction Error: {e}")
+            x = np.expand_dims(
+                np.array(img, dtype=np.float32),
+                axis=0
+            )
+
+            scores = model.predict(x, verbose=0)[0]
+
+            best = np.argmax(scores)
+
+            predicted_class = classes[best].replace(
+                "potato__", ""
+            )
+
+            confidence = scores[best] * 100
+
+            st.divider()
+
+            st.success("Prediction Completed Successfully!")
+
+            st.subheader("Prediction Result")
+
+            st.write(f"**Disease:** {predicted_class}")
+
+            st.metric(
+                "Confidence",
+                f"{confidence:.2f}%"
+            )
+
+            st.divider()
+
+            st.subheader("Class Probabilities")
+
+            for name, score in zip(classes, scores):
+
+                class_name = name.replace("potato__", "")
+
+                st.write(
+                    f"{class_name}: {score * 100:.2f}%"
+                )
+
+                st.progress(float(score))
+
+        except Exception as e:
+
+            st.error(f"Prediction Error: {e}")
 
 else:
-    st.title("About Project")
-    st.write("Potato Leaf Classification using CNN.")
-    st.write("Framework: TensorFlow / Keras")
-    st.write("Frontend: Streamlit")
-    st.write("Image Size: 128 × 128")
-    st.write("Output Classes: 3")
+    st.info("Please upload a potato leaf image to continue.")
