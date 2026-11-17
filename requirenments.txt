@@ -1,7 +1,7 @@
-steamlit
+streamlit
 tensorflow
 numpy
 matplotlib
-pillow
+Pillow
 scikit-learn
 ipykernel
