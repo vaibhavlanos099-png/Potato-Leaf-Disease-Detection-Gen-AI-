@@ -1,0 +1,28 @@
+# Dataset
+data/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Trained models
+*.keras
+*.h5
+
+# Local prediction images
+leaf.JPG
+leaf.jpg
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Python and Jupyter cache
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# VS Code settings
+.vscode/
